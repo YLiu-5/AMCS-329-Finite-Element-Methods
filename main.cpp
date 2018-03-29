@@ -7,18 +7,19 @@
 #include <iomanip>
 int main()
 {
-	std::vector<double> norm_inf(6);
-	std::vector<double> norm_2(6);
-	for(int k=4;k<=4;k++)
+	// std::vector<double> norm_inf(6);
+	// std::vector<double> norm_2(6);
+	for(int k=5;k<=5;k++)
 	{
 		poisson1d P1d(pow(2,k),0,0.01);
-		P1d.assembleStiffnessMatrix();
+		//P1d.assembleStiffnessMatrix();
 		P1d.assembleSparseStiffnessMatrix();
 		P1d.printSparseStiffnessMatrix();
 		P1d.assemblerhs();
-		P1d.printrhs();
-		P1d.solver();
-		P1d.printsol();
+		//P1d.printrhs();
+		//P1d.solver();
+		P1d.forwardEuler();
+		//P1d.printsol();
 		//P1d.norms();
 		//norm_inf[k-2]=(P1d.getNormInf());
 		//norm_2[k-2]=(P1d.getNorm2());

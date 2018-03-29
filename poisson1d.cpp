@@ -19,16 +19,23 @@ poisson1d::poisson1d(int _N,double _bc, double _tau)
 	//totally 0,1,2,...N grid points, but only N-1 unknowns. In the case N=128, we have 127 unknowns, the indices are 0,1,2,...,N-2
 	//For Exercise 3.3 there are N unknowns because of Neumann BC.
 	stiffnessMatrix = new double*[N-1];
-	for (int i = 0; i < N; i++)
+	for (int i = 0; i < N-1; i++)
 		stiffnessMatrix[i] = new double[N-1];
 	sparseStiffnessMatrix = new double*[3];
-	for (int i = 0; i < N; i++)
+	for (int i = 0; i < 3; i++)
 		sparseStiffnessMatrix[i] = new double[N-1];
+	
 	solutionVector = new double[N-1];
+	for (int i = 0; i < N-1; i++)
+		solutionVector[i] = 0;
+	//Initialize
+
+	
 	rhs = new double[N-1];	//P1d.printStiffnessMatrix();
+	
 
 	std::string filename;
-	filename = "poisson1d_bc=" + std::to_string(int(_bc)) + ".txt";
+	filename = "poisson1d_output.txt";
 	myoutput.open(filename.c_str(),std::ios_base::out);
 	myoutput<< "\n\n";
 	myoutput<< "Case: N="<<N<<std::endl;
@@ -83,7 +90,7 @@ void poisson1d::assembleSparseStiffnessMatrix()
 	for (int k = 0; k < N; k++)
 	{
 		if (k == 0)
-			sparseStiffnessMatrix[2][k] = -2;
+			sparseStiffnessMatrix[2][k] = -1;
 		else if (k == N - 2)
 			sparseStiffnessMatrix[0][k] = -1;
 		else
@@ -238,29 +245,48 @@ double poisson1d::getNormInf()
 void poisson1d::forwardEuler()
 {
 	double* ulast= new double[N-1];
-	double* Au=new double[N-1];
-	
-	for (double time=0; time<=0.4; time+=tau)
-	{
+	double* Au = new double[N-1];
+	//Initial Condition
+	for (int k=0; k<N-1; k++)
+		ulast[k]=4*(k+1)*h*(1-(k+1)*h);
 
-		//Calculate Au
+	// myoutput << "Init: " << std::endl;
+	// for (int i = 0; i < N - 1; i++)
+	// {
+	// 	myoutput << std::setw(10) << std::left << ulast[i];
+	// }
+
+
+	for (double time=tau; time<=0.4; time+=tau)
+	{
+		for (int k=0; k<N-1; k++)
+			Au[k]=0;
+		
+		//Calculate Au (or u_xx)
 		for (int k=0; k<N-1; k++)
 		{
 			for(int i=0; i<3; i++)
 			{
 				if (sparseStiffnessMatrix[i][k] - 0 < 1e-6) continue;
 				switch(i){
-					case 0 : solutionVector[k] += sparseStiffnessMatrix[i][k]*ulast[k-1]  ; break;
-					case 1 : solutionVector[k] += sparseStiffnessMatrix[i][k]*ulast[k]  ; break;
-					case 2 : solutionVector[k] += sparseStiffnessMatrix[i][k]*ulast[k+1]  ; break;
+					case 0 : Au[k] += tau*pow(h,-2)*(-sparseStiffnessMatrix[i][k])*ulast[k-1]  ; break;
+					case 1 : Au[k] += tau*pow(h,-2)*(-sparseStiffnessMatrix[i][k])*ulast[k]  ; break;
+					case 2 : Au[k] += tau*pow(h,-2)*(-sparseStiffnessMatrix[i][k])*ulast[k+1]  ; break;
+					//Minus sign here because the sparseStiffnessMatrix is -u_(xx)
 				}
 			}
 		}
+		myoutput<<"\n"<<"Time = "<<time<<std::endl;
+		printsol();
+
+		for (int k=0; k<N-1; k++)
+			solutionVector[k] = ulast[k]+ Au[k];
 
 		//Store ulast
 		for (int k=0; k<N-1; k++)
 			ulast[k]=solutionVector[k];
-		myoutput<<"Time = "<<time<<std::endl;
+		
+		myoutput<<"\n"<<"Time = "<<time<<std::endl;
 		printsol();
 	}
 }
