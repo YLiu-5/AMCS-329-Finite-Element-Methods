@@ -106,7 +106,7 @@ void poisson1d::assemblerhs()
 
 	for (int i = 0; i < N-1; i++)
 	{
-		rhs[i]=1*pow(h,2);
+		rhs[i]=0;
 		//rhs[i] = sin(M_PI*(i+1)*h) * pow(h,2);
 		//rhs[i] = 1* pow(h,2);
 	}
@@ -295,5 +295,39 @@ void poisson1d::forwardEuler()
 
 void poisson1d::backwardEuler()
 {
-	
+	double* ulast= new double[N-1];
+	//Initial Condition
+	for (int k=0; k<N-1; k++)
+		ulast[k]=4*(k+1)*h*(1-(k+1)*h);
+
+	// myoutput << "Init: " << std::endl;
+	// for (int i = 0; i < N - 1; i++)
+	// {
+	// 	myoutput << std::setw(10) << std::left << ulast[i];
+	// }
+
+
+	for (double time=tau; time<=0.4; time+=tau)
+	{	
+
+		//(I-kA)U^(n+1)=U^n
+		for (int k=0; k<N-1; k++)
+			rhs[k]=ulast[k];
+		for (int i=0; i<N-1; i++)
+			for (int j=0; j<3; j++)
+				sparseStiffnessMatrix[j][i]*=(-tau*-1*pow(h,-2));
+				//In this program sparseStiffnessMatrix only store integers, we need to multiply frac{1}{h^2}
+				//Also sparseStiffnessMatrix is assembled according to -u_xx, we need to multiply -1
+		for (int i=0; i<N-1; i++)
+				sparseStiffnessMatrix[1][i]+=1;
+
+		solver();
+
+		//Store ulast
+		for (int k=0; k<N-1; k++)
+			ulast[k]=solutionVector[k];
+		
+		myoutput<<"\n"<<"Time = "<<time<<std::endl;
+		printsol();
+	}
 }

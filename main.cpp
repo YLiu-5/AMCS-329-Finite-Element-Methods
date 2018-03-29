@@ -11,14 +11,15 @@ int main()
 	// std::vector<double> norm_2(6);
 	for(int k=5;k<=5;k++)
 	{
-		poisson1d P1d(pow(2,k),0,0.01);
+		poisson1d P1d(pow(2,k),0,4e-4);
 		//P1d.assembleStiffnessMatrix();
 		P1d.assembleSparseStiffnessMatrix();
 		P1d.printSparseStiffnessMatrix();
 		P1d.assemblerhs();
 		//P1d.printrhs();
 		//P1d.solver();
-		P1d.forwardEuler();
+		// P1d.forwardEuler();
+		P1d.backwardEuler();
 		//P1d.printsol();
 		//P1d.norms();
 		//norm_inf[k-2]=(P1d.getNormInf());
