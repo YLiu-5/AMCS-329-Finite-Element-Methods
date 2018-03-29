@@ -11,19 +11,19 @@ int main()
 	// std::vector<double> norm_2(6);
 	for(int k=5;k<=5;k++)
 	{
-		poisson1d P1d(pow(2,k),0,4e-4);
-		//P1d.assembleStiffnessMatrix();
-		P1d.assembleSparseStiffnessMatrix();
-		P1d.printSparseStiffnessMatrix();
-		P1d.assemblerhs();
-		//P1d.printrhs();
-		//P1d.solver();
-		// P1d.forwardEuler();
-		P1d.backwardEuler();
-		//P1d.printsol();
-		//P1d.norms();
-		//norm_inf[k-2]=(P1d.getNormInf());
-		//norm_2[k-2]=(P1d.getNorm2());
+		// poisson1d P1d(pow(2,k),0,4e-4);
+		// //P1d.assembleStiffnessMatrix();
+		// P1d.assembleSparseStiffnessMatrix();
+		// P1d.printSparseStiffnessMatrix();
+		// P1d.assemblerhs();
+		// //P1d.printrhs();
+		// //P1d.solver();
+		// // P1d.forwardEuler();
+		// P1d.backwardEuler();
+		// //P1d.printsol();
+		// //P1d.norms();
+		// //norm_inf[k-2]=(P1d.getNormInf());
+		// //norm_2[k-2]=(P1d.getNorm2());
 	}
 
 /*	norm2Output.open("norm2.txt");
@@ -47,11 +47,14 @@ int main()
 	//P1d_2.solver();
 	//P1d_2.printxOnehalf();
 	//
-	//poisson2d P2d(4);
-	//P2d.assembleStiffnessMatrix();
+	poisson2d P2d(4);
+	P2d.assembleStiffnessMatrix();
+	P2d.assembleSparseStiffnessMatrix();
+	P2d.printSparseStiffnessMatrix();
 	//P2d.printStiffnessMatrix();
-	//P2d.assemblerhs();
-	//P2d.printrhs();
+	P2d.assemblerhs();
+	P2d.printrhs();
+	P2d.Jacobi();
 	//P2d.calculateDefect();
 	return 0;
 }

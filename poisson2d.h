@@ -25,6 +25,8 @@ public:
 	void printSparseStiffnessMatrix();
 	void printrhs();
 	void Jacobi();
+	void printsol();
+	void printr();
 
 	void calculateDefect();
 };

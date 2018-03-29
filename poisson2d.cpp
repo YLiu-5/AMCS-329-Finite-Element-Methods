@@ -6,13 +6,13 @@
 poisson2d::poisson2d(int _N)
 {
 	N = _N;
-	h = 1 / (N*N);
+	h = 1.0 / N;
 	stiffnessMatrix = new double*[(N - 1) * (N - 1)];
 	for (int i = 0; i < (N - 1)*(N-1); i++)
 		stiffnessMatrix[i] = new double[(N - 1) * (N-1)];
 	solutionVector = new double[(N - 1) * (N - 1)];
 	rhs = new double[(N - 1) * (N - 1)];
-	myoutput.open("poisson2d.txt");
+	myoutput.open("poisson2d_output.txt",std::ios_base::out);
 
 	sparseStiffnessMatrix = new double*[5];
 	for (int k=0; k < 5; k++)
@@ -97,16 +97,15 @@ void poisson2d::assemblerhs()
 	//initialize
 	for (int k=0; k<(N-1)*(N-1); k++)
 		rhs[k]=0;
-
 	//Boundary Condition x+y
 	for (int k=0; k<N-1; k++)
-		rhs[k]+=(k+1)*h;
+		rhs[k]+=((k+1)*h);
 	for (int k=(N-2)*(N-1); k<(N-1)*(N-1); k++)
-		rhs[k]+=(k+1)*h+1;
-	for (int k=0; k<(N-1)*(N-1); k=k+N-1)
-		rhs[k]+=(double(k/(N-1))+1)*h;
-	for (int k=N-2; k<(N-1)*(N-1); k=k+N-1)
-		rhs[k]+=(double(k/(N-1))+1)*h+1;
+		rhs[k]+=((k+1)*h+1);
+	for (int k=0; k<(N-1)*(N-1); k+=N-1)
+		rhs[k]+=(((k/(N-1))+1)*h);
+	for (int k=N-2; k<(N-1)*(N-1); k+=N-1)
+		rhs[k]+=(((k/(N-1))+1)*h+1);
 }
 
 void poisson2d::Jacobi()
@@ -117,29 +116,42 @@ void poisson2d::Jacobi()
 	double rnorm=0, rnormlast=0;
 	double rho=0;
 	myoutput<<"rnorm"<<std::setw(10)<<"rho"<<std::endl;
+	for (int j=0; j<(N-1)*(N-1); j++)
+	{
+		//initialize
+		ulast[j]=0;
+	}
 	for (int count=0; count<=100; count++)
 	{
+		// myoutput << "loop: " <<count <<std::endl;
+		// myoutput << "\n" << "ulast: " << std::endl;
+		// for (int i = 0; i < (N - 1)*(N - 1); i++)
+		// {
+		// 	myoutput << std::setw(10) << std::left << ulast[i];
+		// }		
+		// myoutput<<std::endl;
+
 		for (int j=0; j<(N-1)*(N-1); j++)
 		{
-			//initialize
-			ulast[j]=0;
-			r[j]=rhs[j]*pow(h,2);
+			r[j]=rhs[j];
 			for (int k=0; k<5; k++)
 			{
-				if(sparseStiffnessMatrix[k][j]-0 < 1e-6) continue;
+				if(abs(sparseStiffnessMatrix[k][j]-0) < 1e-6) continue;
+				if (j==4)
+					myoutput<<k;
 				switch(k)
 				{				
-						// case 0: r[j] -= sparseStiffnessMatrix[j][k]*ulast[j+N]; break;
-						// case 1: r[j] -= sparseStiffnessMatrix[j][k]*ulast[j+1]; break;
-						// case 2: r[j] -= sparseStiffnessMatrix[j][k]*ulast[j];   break;
-						// case 3: r[j] -= sparseStiffnessMatrix[j][k]*ulast[j-1]; break;
-						// case 4: r[j] -= sparseStiffnessMatrix[j][k]*ulast[j-N]; break;
+					case 0: r[j] -= pow(h,-2)*(sparseStiffnessMatrix[k][j])*ulast[j-(N-1)]; 		break;
+					case 1: r[j] -= pow(h,-2)*(sparseStiffnessMatrix[k][j])*ulast[j-1]; 			break;
+					case 2: r[j] -= pow(h,-2)*(sparseStiffnessMatrix[k][j])*ulast[j];  			    break;
+					case 3: r[j] -= pow(h,-2)*(sparseStiffnessMatrix[k][j])*ulast[j+1]; 			break;
+					case 4: r[j] -= pow(h,-2)*(sparseStiffnessMatrix[k][j])*ulast[j+(N+1)]; 		break;
 				}
 			}
 		}
 		//calculate r norm
 		for (int k=0; k<(N-1)*(N-1); k++)
-			rnorm+=pow(r[k],2);
+			rnorm += pow(r[k],2);
 		rnorm=sqrt(rnorm);
 
 		if(count!=0)
@@ -154,17 +166,22 @@ void poisson2d::Jacobi()
 		rnormlast=rnorm;
 		rnorm=0;
 
-
+		myoutput << "\n" << "r: " << std::endl;
+		for (int i = 0; i < (N - 1)*(N - 1); i++)
+		{
+			myoutput << std::setw(10) << std::left << r[i];
+		}		
+		printsol();
 
 		//update U^(k+1)		
 		for (int k=0; k<(N-1)*(N-1); k++)
 		{
-			solutionVector[k]=ulast[k]+r[k]/4;
+			solutionVector[k]=ulast[k]+r[k]/(4*pow(h,-2));
 			ulast[k]=solutionVector[k];
 		}
-	}
-		
+		printsol();
 
+	}
 }
 
 void poisson2d::printStiffnessMatrix()
@@ -225,3 +242,22 @@ void poisson2d::calculateDefect()
 	myoutput << std::endl;
 
 }
+void poisson2d::printsol()
+{
+	
+	myoutput << "\n" << "Sol: " << std::endl;
+	for (int i = 0; i < (N - 1)*(N - 1); i++)
+	{
+		myoutput << std::setw(10) << std::left << solutionVector[i];
+	}
+}
+
+// void poisson2d::printr()
+// {
+	
+// 	myoutput << "\n" << "r: " << std::endl;
+// 	for (int i = 0; i < (N - 1)*(N - 1); i++)
+// 	{
+// 		myoutput << std::setw(10) << std::left << r[i];
+// 	}
+// }

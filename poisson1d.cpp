@@ -267,7 +267,7 @@ void poisson1d::forwardEuler()
 		{
 			for(int i=0; i<3; i++)
 			{
-				if (sparseStiffnessMatrix[i][k] - 0 < 1e-6) continue;
+				if (abs(sparseStiffnessMatrix[i][k] - 0) < 1e-6) continue;
 				switch(i){
 					case 0 : Au[k] += tau*pow(h,-2)*(-sparseStiffnessMatrix[i][k])*ulast[k-1]  ; break;
 					case 1 : Au[k] += tau*pow(h,-2)*(-sparseStiffnessMatrix[i][k])*ulast[k]  ; break;
