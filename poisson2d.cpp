@@ -101,7 +101,7 @@ void poisson2d::assemblerhs()
 	for (int k=0; k<N-1; k++)
 		rhs[k]+=((k+1)*h);
 	for (int k=(N-2)*(N-1); k<(N-1)*(N-1); k++)
-		rhs[k]+=((k+1)*h+1);
+		rhs[k]+=((k%(N-1)+1)*h+1);
 	for (int k=0; k<(N-1)*(N-1); k+=N-1)
 		rhs[k]+=(((k/(N-1))+1)*h);
 	for (int k=N-2; k<(N-1)*(N-1); k+=N-1)
@@ -115,7 +115,7 @@ void poisson2d::Jacobi()
 
 	double rnorm=0, rnormlast=0;
 	double rho=0;
-	myoutput<<"rnorm"<<std::setw(10)<<"rho"<<std::endl;
+	myoutput<<"rnorm"<<std::setw(10)<<std::left<<"rho"<<std::endl;
 	for (int j=0; j<(N-1)*(N-1); j++)
 	{
 		//initialize
@@ -133,50 +133,51 @@ void poisson2d::Jacobi()
 
 		for (int j=0; j<(N-1)*(N-1); j++)
 		{
-			r[j]=rhs[j];
+			r[j]=+rhs[j]*pow(h,2);
 			for (int k=0; k<5; k++)
 			{
-				if(abs(sparseStiffnessMatrix[k][j]-0) < 1e-6) continue;
-				if (j==4)
-					myoutput<<k;
+				if(abs(sparseStiffnessMatrix[k][j] - 0) < 1e-6) continue;
 				switch(k)
 				{				
-					case 0: r[j] -= pow(h,-2)*(sparseStiffnessMatrix[k][j])*ulast[j-(N-1)]; 		break;
-					case 1: r[j] -= pow(h,-2)*(sparseStiffnessMatrix[k][j])*ulast[j-1]; 			break;
-					case 2: r[j] -= pow(h,-2)*(sparseStiffnessMatrix[k][j])*ulast[j];  			    break;
-					case 3: r[j] -= pow(h,-2)*(sparseStiffnessMatrix[k][j])*ulast[j+1]; 			break;
-					case 4: r[j] -= pow(h,-2)*(sparseStiffnessMatrix[k][j])*ulast[j+(N+1)]; 		break;
+					case 0: r[j] -= (sparseStiffnessMatrix[k][j])*ulast[j-(N-1)]; 		break;
+					case 1: r[j] -= (sparseStiffnessMatrix[k][j])*ulast[j-1]; 			break;
+					case 2: r[j] -= (sparseStiffnessMatrix[k][j])*ulast[j];  			    break;
+					case 3: r[j] -= (sparseStiffnessMatrix[k][j])*ulast[j+1]; 			break;
+					case 4: r[j] -= (sparseStiffnessMatrix[k][j])*ulast[j+(N-1)]; 		break;
 				}
 			}
 		}
-		//calculate r norm
+		////calculate r norm
 		for (int k=0; k<(N-1)*(N-1); k++)
 			rnorm += pow(r[k],2);
 		rnorm=sqrt(rnorm);
 
-		if(count!=0)
+
+		if(rnormlast==0)
+			rho=0;
+		else
 			rho=rnorm/rnormlast;
 		
-
-		myoutput << std::setw(5) << std::left << rnorm;
-		myoutput << std::setw(5) << std::left << rho;
+		myoutput << std::endl;
+		myoutput << std::setw(5) << std::left << rnorm <<std::endl;
+		myoutput << std::setw(5) << std::left << rho << std::endl ;
 		myoutput << std::endl;
 		
 		
 		rnormlast=rnorm;
 		rnorm=0;
 
-		myoutput << "\n" << "r: " << std::endl;
-		for (int i = 0; i < (N - 1)*(N - 1); i++)
-		{
-			myoutput << std::setw(10) << std::left << r[i];
-		}		
-		printsol();
+		// myoutput << "\n" << "r: " << std::endl;
+		// for (int i = 0; i < (N - 1)*(N - 1); i++)
+		// {
+		// 	myoutput << std::setw(15) << std::left << r[i];
+		// }		
+		// printsol();
 
-		//update U^(k+1)		
+		////update U^(k+1)		
 		for (int k=0; k<(N-1)*(N-1); k++)
 		{
-			solutionVector[k]=ulast[k]+r[k]/(4*pow(h,-2));
+			solutionVector[k]=ulast[k]+r[k]/4;
 			ulast[k]=solutionVector[k];
 		}
 		printsol();
